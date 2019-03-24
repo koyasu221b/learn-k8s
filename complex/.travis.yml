@@ -1,0 +1,33 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - gem install bundler
+
+script:
+  - echo "test"
+
+after_success:
+  - docker build -t koyasu221b/multi-client ./client
+  - docker build -t koyasu221b/multi-nginx ./nginx
+  - docker build -t koyasu221b/multi-server ./server
+  - docker build -t koyasu221b/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push koyasu221b/multi-client
+  - docker push koyasu221b/multi-nginx
+  - docker push koyasu221b/multi-server
+  - docker push koyasu221b/multi-worker
+
+deploy:
+  provider: elasticbeanstalk
+  region: us-west-2
+  app: multi-docker
+  env: MultiDocker-env
+  bucket_name: elasticbeanstalk-us-west-2-333350503471
+  bucket_path: docker-multi
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: $AWS_SECRET_KEY
